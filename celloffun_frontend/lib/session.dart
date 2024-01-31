@@ -1,5 +1,5 @@
 import 'package:celloffun_frontend/connection.dart';
-import 'package:celloffun_frontend/rendering.dart';
+import 'package:celloffun_frontend/widgets/arena.dart';
 import 'package:celloffun_frontend/widgets/lobby.dart';
 import 'package:flutter/material.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -45,51 +45,6 @@ class _SessionScreenState extends State<SessionScreen> {
                   );
                 },
               ));
-        });
-  }
-}
-
-class Arena extends StatelessWidget {
-  const Arena({
-    super.key,
-    required this.connection,
-  });
-
-  final Connection connection;
-
-  @override
-  Widget build(BuildContext context) {
-    return BoardPainter(connection: connection);
-  }
-}
-
-class BoardPainter extends StatelessWidget {
-  const BoardPainter({
-    super.key,
-    required this.connection,
-  });
-
-  final Connection connection;
-
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder(
-        stream: connection.boardsStreamController.stream,
-        builder: (context, boardSnapshot) {
-          if (!boardSnapshot.hasData) return const Placeholder();
-
-          final pixels = generatePixels(boardSnapshot.data!.cells,
-              InheritedGameData.of(context).data.clientId);
-          return FutureBuilder(
-            future: makeGridImage(pixels),
-            builder: (context, imageSnapshot) {
-              if (!imageSnapshot.hasData) return const Placeholder();
-              return CustomPaint(
-                isComplex: true,
-                painter: CustomGrid(imageSnapshot.data!),
-              );
-            },
-          );
         });
   }
 }

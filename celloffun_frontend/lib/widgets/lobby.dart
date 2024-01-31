@@ -25,7 +25,15 @@ class LobbyData extends ChangeNotifier {
   late List<Match> matches;
   Set<int> startIndices = {};
 
-  LobbyData({required this.selectedCell, required this.matches});
+  bool ready = false;
+  bool showFullData = true;
+  String? opponent;
+
+  LobbyData({
+    required this.selectedCell,
+    required this.matches,
+    required this.ready,
+  });
 
   void selectCell(Cell cell) {
     selectedCell = cell;
@@ -48,6 +56,11 @@ class LobbyData extends ChangeNotifier {
 
   void removeStartIndex(int index) {
     startIndices.remove(index);
+  }
+
+  void toogleDisplay(bool show) {
+    showFullData = show;
+    notifyListeners();
   }
 }
 
@@ -87,7 +100,11 @@ class _LobbyState extends State<Lobby> {
   @override
   Widget build(BuildContext context) {
     return InheritedLobby(
-      data: LobbyData(selectedCell: selectedCell, matches: matches),
+      data: LobbyData(
+        selectedCell: selectedCell,
+        matches: matches,
+        ready: ready,
+      ),
       child: Scaffold(
         appBar: AppBar(
           title: StreamBuilder(
@@ -111,42 +128,114 @@ class _LobbyState extends State<Lobby> {
                       });
                     }
                   },
-                  icon: Icon(Icons.check_circle_outline_rounded,
-                      color: ready ? Colors.green : null));
+                  icon: Tooltip(
+                    message: 'Готовность',
+                    child: Icon(
+                      Icons.check_circle_outline_rounded,
+                      color: ready ? Colors.green : null,
+                    ),
+                  ));
             })
           ],
           centerTitle: true,
         ),
-        body: Column(
+        body: const Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Center(child: CellPicker(board: widget.board)),
+            LobbyInfo(),
+            LobbyTools(),
+            CellPicker(),
+            MatchPicker(),
+            CellPalette()
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class LobbyInfo extends StatelessWidget {
+  const LobbyInfo({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final gameData = InheritedGameData.of(context).data;
+    final lobbyData = InheritedLobby.of(context).data;
+
+    return AnimatedSize(
+        duration: const Duration(milliseconds: 300),
+        child: Column(
+            children: lobbyData.showFullData
+                ? [
+                    ListTile(
+                      title: const Text('Код игры:'),
+                      trailing: Text(gameData.gameCode),
+                    ),
+                    const ListTile(
+                      title: Text('Имя оппонента:'),
+                      trailing: SizedBox(
+                        width: 100,
+                        child: LinearProgressIndicator(),
+                      ),
+                    ),
+                    ListTile(
+                        title: const Text('Количество итераций:'),
+                        trailing: Text(gameData.iterations.toString())),
+                    const ListTile(
+                      title: Text(
+                          'Размести до 10 стартовых синих клеток на игровом поле. Затем настрой правила для своих клеток.\nПодсказка: поле можно приближать!'),
+                    ),
+                  ]
+                : const []));
+  }
+}
+
+class LobbyTools extends StatelessWidget {
+  const LobbyTools({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final data = InheritedLobby.of(context).data;
+    return Column(
+      children: [
+        CheckboxListTile(
+            title: const Text('Подробная информация'),
+            value: data.showFullData,
+            onChanged: (value) => data.toogleDisplay(value ?? false))
+      ],
+    );
+  }
+}
+
+class CellPalette extends StatelessWidget {
+  const CellPalette({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final clientId = InheritedGameData.of(context).data.clientId;
+
+    return SizedBox(
+      height: 60,
+      child: Material(
+        elevation: 10,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            PaletteCell(
+              cell: Cell(CellTypes.alive, owner: clientId),
             ),
-            const MatchPicker(),
-            SizedBox(
-              height: 60,
-              child: Material(
-                elevation: 10,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    PaletteCell(
-                      cell: Cell(CellTypes.alive, owner: clientId),
-                    ),
-                    PaletteCell(
-                      cell: Cell(CellTypes.dead, owner: clientId),
-                    ),
-                    PaletteCell(
-                      cell: Cell(CellTypes.void_, owner: clientId),
-                    ),
-                    const PaletteCell(
-                      cell: Cell(CellTypes.alive, owner: 'enemy'),
-                    ),
-                  ],
-                ),
-              ),
-            )
+            PaletteCell(
+              cell: Cell(CellTypes.dead, owner: clientId),
+            ),
+            PaletteCell(
+              cell: Cell(CellTypes.void_, owner: clientId),
+            ),
+            const PaletteCell(
+              cell: Cell(CellTypes.alive, owner: 'enemy'),
+            ),
           ],
         ),
       ),

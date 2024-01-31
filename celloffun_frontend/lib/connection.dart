@@ -13,14 +13,16 @@ class Connection {
   final String name;
   final StreamController<Board> boardsStreamController;
   final StreamController<int> timerController;
+  final StreamController<int> iterationController;
   String? id;
 
   final Completer<GameData> _gameData = Completer();
   final Completer<bool> _simulationReady = Completer();
 
   Connection({required this.channel, required this.name})
-      : boardsStreamController = StreamController(),
-        timerController = StreamController() {
+      : boardsStreamController = StreamController.broadcast(),
+        timerController = StreamController.broadcast(),
+        iterationController = StreamController() {
     channel.stream.listen(_handle);
     _handshake();
   }
@@ -37,16 +39,23 @@ class Connection {
   Future<bool> waitForSimulation() => _simulationReady.future;
 
   _handle(dynamic data) => switch (jsonDecode(data)) {
-        {'status': 'playing', 'board': List cells} => _onBoard(cells),
+        {
+          'status': 'playing',
+          'iterations_remain': int iterations,
+          'board': List cells
+        } =>
+          _onBoard(cells, iterations),
         {
           'status': 'ready',
-          'id': String id,
+          'id': String clientId,
+          'gameCode': String gameCode,
           'side': String side,
+          'iterations': int iterations,
           'width': int width,
           'height': int height,
           'cells': List cells,
         } =>
-          _onReady(id, cells, side, width, height),
+          _onReady(clientId, gameCode, cells, side, iterations, width, height),
         {'seconds': int time} => timerController.add(time),
         {'status': 'simulation_ready'} => _onSimulationReady(),
         _ => null
@@ -57,26 +66,39 @@ class Connection {
     channel.sink.add(jsonEncode(message));
   }
 
-  _onReady(String id, List cells, String side, int width, int height) {
+  _onReady(String clientId, String gameCode, List cells, String side,
+      int iterations, int width, int height) {
     final side_ = switch (side) { 'top' => Sides.top, _ => Sides.bottom };
     final board_ = Board(
         width: width,
         height: height,
         cells: cells.map((cell) => Cell.fromJson(cell)).toList());
-    final data = GameData(clientId: id, board: board_, side: side_);
+    final data = GameData(
+        clientId: clientId,
+        board: board_,
+        side: side_,
+        gameCode: gameCode,
+        iterations: iterations);
     _gameData.complete(data);
   }
 
-  _onBoard(List data) async {
+  _onBoard(List data, int iterations) async {
     final cells = data.map((cell) => Cell.fromJson(cell)).toList();
 
     final board = (await _gameData.future).board;
     boardsStreamController
         .add(Board(width: board.width, height: board.height, cells: cells));
+    iterationController.add(iterations);
   }
 
   _onSimulationReady() {
     _simulationReady.complete(true);
+  }
+
+  close() {
+    timerController.close();
+    boardsStreamController.close();
+    iterationController.close();
   }
 }
 

@@ -6,8 +6,6 @@ import 'package:celloffun_backend/session.dart';
 import 'package:uuid/uuid.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
-final Session session = Session(); //test
-
 class Connection {
   final String id;
   final WebSocketChannel channel;
@@ -31,6 +29,7 @@ class Connection {
   _onHandshake(String name) async {
     assert(state is Idle);
     this.name = name;
+    final session = Session('555555'); //test
     state = Connected(session: session);
     _ok();
     final data = await session.getGameData(id);
