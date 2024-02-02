@@ -76,10 +76,10 @@ class _MainScreenState extends State<MainScreen> {
               width: 300,
               child: TextField(
                   controller: nameController,
+                  maxLength: 20,
                   decoration: const InputDecoration(
                       labelText: 'Имя', hintText: 'Например, Олег'))),
         ),
-
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 16),
           child: SizedBox(
@@ -96,35 +96,49 @@ class _MainScreenState extends State<MainScreen> {
                     },
                     child: Center(
                         child: Text(
-                      'Играть',
+                      'Создать игру',
                       style: Theme.of(context).textTheme.headlineMedium,
                     )))),
           ),
         ),
-        // SizedBox(
-        //   height: 100,
-        //   child: Material(
-        //     color: Theme.of(context).cardColor,
-        //     child: InkWell(
-        //       onTap: () {},
-        //       child: Row(
-        //         mainAxisAlignment: MainAxisAlignment.center,
-        //         children: [
-        //           const SizedBox(
-        //             width: 300,
-        //             child: TextField(
-        //                 decoration: InputDecoration(
-        //                     labelText: 'Подключиться', hintText: '123456')),
-        //           ),
-        //           IconButton(
-        //             onPressed: () {},
-        //             icon: const Icon(Icons.rocket_launch_rounded),
-        //           )
-        //         ],
-        //       ),
-        //     ),
-        //   ),
-        // ),
+        const Center(
+          child: Text('или'),
+        ),
+        Builder(builder: (context) {
+          final controller = TextEditingController();
+
+          return SizedBox(
+            height: 100,
+            width: 300,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: TextField(
+                      controller: controller,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                          labelText: 'Подключиться', hintText: '123456')),
+                ),
+                IconButton(
+                  onPressed: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) => SessionScreen(
+                        name: nameController.text,
+                        sessionId: controller.text,
+                      ),
+                    ));
+                  },
+                  icon: const Icon(
+                    Icons.rocket_launch_rounded,
+                    color: Colors.red,
+                  ),
+                )
+              ],
+            ),
+          );
+        }),
       ],
     );
   }

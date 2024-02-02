@@ -23,9 +23,6 @@ class CellPickerState extends State<CellPicker> {
   void didChangeDependencies() {
     final gameData = InheritedGameData.of(context).data;
     cells = gameData.board.cells;
-    final id = InheritedGameData.of(context).data.clientId;
-
-    ownCellsCount = cells.where((cell) => cell.owner == id).length;
 
     availablePositions = switch (gameData.side) {
       Sides.bottom => List.generate(
@@ -55,8 +52,11 @@ class CellPickerState extends State<CellPicker> {
     final cell = cells[index];
     if (!availablePositions.contains(index)) return;
 
+    final id = InheritedGameData.of(context).data.clientId;
+    ownCellsCount =
+        cells.where((c) => c.type == CellTypes.alive && c.owner == id).length;
+
     if (cell.type == CellTypes.alive) {
-      ownCellsCount -= 1;
       final c = Cell(CellTypes.dead,
           owner: InheritedGameData.of(context).data.clientId);
 
@@ -65,9 +65,7 @@ class CellPickerState extends State<CellPicker> {
       setState(() {
         cells[index] = c;
       });
-    }
-    if (cell.type == CellTypes.dead && ownCellsCount < maxInitialCells) {
-      ownCellsCount += 1;
+    } else if (cell.type == CellTypes.dead && ownCellsCount < maxInitialCells) {
       final c = Cell(CellTypes.alive,
           owner: InheritedGameData.of(context).data.clientId);
 
@@ -81,7 +79,7 @@ class CellPickerState extends State<CellPicker> {
 
   @override
   Widget build(BuildContext context) {
-    final width = InheritedLobby.of(context).data.showFullData ? 500 : 200;
+    final width = InheritedLobby.of(context).data.showFullData ? 500 : 300;
 
     const padding = 16;
     final sideLength =

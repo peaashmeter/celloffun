@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:celloffun_frontend/cell.dart';
 
 class Board {
@@ -16,6 +18,7 @@ class GameData {
   final Sides side;
   final String gameCode;
   final int iterations;
+  final Completer<String> opponentName = Completer();
 
   GameData({
     required this.clientId,

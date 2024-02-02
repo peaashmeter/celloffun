@@ -14,18 +14,20 @@ class Session {
   Board? board;
   bool isSimulating = false;
 
-  int secondsRemain = 120;
+  int secondsRemain = 150;
 
   final StreamController<dynamic> sessionStreamController =
       StreamController.broadcast();
   final List<Connection> connections = [];
 
+  final Completer<void> _closed = Completer();
+
   Session(this.gameCode)
       : board = Board.empty(),
-        totalIterations = Random().nextInt(300) + 200;
+        totalIterations = Random().nextInt(1) + 200;
 
   bool checkReadiness() => (connections.every((c) => c.state is Ready));
-  bool checkPlayersConnected() => connections.length == 1;
+  bool checkPlayersConnected() => connections.length == 2;
 
   processLobbyCountdown() {
     Timer.periodic(Duration(seconds: 1), (timer) {
@@ -33,7 +35,8 @@ class Session {
       if (secondsRemain < 0 || isSimulating) {
         timer.cancel();
       } else {
-        sessionStreamController.add(jsonEncode({'seconds': secondsRemain}));
+        sessionStreamController
+            .add(jsonEncode({'lobby_countdown': secondsRemain}));
       }
     });
   }
@@ -50,7 +53,7 @@ class Session {
         timer.cancel();
         _simulate();
       } else {
-        sessionStreamController.add(jsonEncode({'seconds': countdown}));
+        sessionStreamController.add(jsonEncode({'epic_countdown': countdown}));
         countdown -= 1;
       }
     });
@@ -77,16 +80,21 @@ class Session {
       });
 
   Stream<dynamic> _computeBoards(Board board) async* {
+    final matches = connections
+        .expand((c) => (c.state as Ready).matches)
+        .map((m) => m.normalize(_rivalOf(m.owner).id))
+        .toList();
+
     var b = board;
 
     while (true) {
       if (b.iteration == totalIterations) {
-        yield _handleOutcome();
+        yield _handleOutcome(b);
+        await _close();
         return;
       }
 
-      final nextBoard = Future(() => b.iterate(
-          connections.expand((c) => (c.state as Ready).matches).toList()));
+      final nextBoard = Future(() => b.iterate(matches));
       final result = await Future.wait(
           [nextBoard, Future.delayed(Duration(milliseconds: _delay))]);
 
@@ -99,16 +107,32 @@ class Session {
     }
   }
 
-  _handleOutcome() {
-    final result = <String, int>{};
-    board!.cells.whereType<AliveCell>().forEach((cell) {
-      if (result.containsKey(cell.owner)) {
-        result[cell.owner] = result[cell.owner]! + 1;
-      }
-      result[cell.owner] = 1;
+  _handleOutcome(Board board) {
+    final result = <String, int>{for (final conn in connections) conn.id: 0};
+
+    board.cells.whereType<AliveCell>().forEach((cell) {
+      result[cell.owner] = result[cell.owner]! + 1;
     });
 
     final report = {'report': result};
     return (jsonEncode(report));
   }
+
+  _close() {
+    _closed.complete();
+  }
+
+  sendOpponentNames() {
+    for (var connection in connections) {
+      final name = _rivalOf(connection.id).name;
+      sessionStreamController
+          .add(jsonEncode({'player': connection.id, 'opponent': name}));
+    }
+  }
+
+  Connection _rivalOf(String id) {
+    return connections.firstWhere((c) => c.id != id);
+  }
+
+  Future<void> waitForClose() => _closed.future;
 }

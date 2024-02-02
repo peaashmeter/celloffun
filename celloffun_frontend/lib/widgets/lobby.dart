@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:core' hide Match;
 import 'package:celloffun_frontend/cell.dart';
 import 'package:celloffun_frontend/connection.dart';
@@ -27,7 +28,6 @@ class LobbyData extends ChangeNotifier {
 
   bool ready = false;
   bool showFullData = true;
-  String? opponent;
 
   LobbyData({
     required this.selectedCell,
@@ -74,6 +74,7 @@ class Lobby extends StatefulWidget {
 }
 
 class _LobbyState extends State<Lobby> {
+  StreamSubscription? timeoutSubscription;
   late String clientId;
   late Cell selectedCell;
   late List<Match> matches;
@@ -94,6 +95,7 @@ class _LobbyState extends State<Lobby> {
                   : Cell(CellTypes.dead, owner: clientId),
             )),
             result: Cell(CellTypes.alive, owner: clientId)));
+
     super.didChangeDependencies();
   }
 
@@ -105,50 +107,76 @@ class _LobbyState extends State<Lobby> {
         matches: matches,
         ready: ready,
       ),
-      child: Scaffold(
-        appBar: AppBar(
-          title: StreamBuilder(
-              stream: widget.connection.timerController.stream,
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  return Text(snapshot.data.toString());
-                }
-                return const Text('120');
-              }),
-          actions: [
-            Builder(builder: (context) {
-              return IconButton(
-                  onPressed: () {
-                    if (!ready) {
-                      final data = InheritedLobby.of(context).data;
-                      widget.connection.ready(
-                          Strategy(data.matches, data.startIndices.toList()));
-                      setState(() {
-                        ready = true;
-                      });
-                    }
-                  },
-                  icon: Tooltip(
-                    message: 'Готовность',
-                    child: Icon(
-                      Icons.check_circle_outline_rounded,
-                      color: ready ? Colors.green : null,
-                    ),
-                  ));
-            })
-          ],
-          centerTitle: true,
-        ),
-        body: const Column(
-          children: [
-            LobbyInfo(),
-            LobbyTools(),
-            CellPicker(),
-            MatchPicker(),
-            CellPalette()
-          ],
-        ),
-      ),
+      child: Builder(builder: (context) {
+        timeoutSubscription ??=
+            widget.connection.lobbyTimerController.stream.listen(
+          (timeRemains) {
+            if (ready) {
+              timeoutSubscription?.cancel();
+              return;
+            }
+
+            if (timeRemains == 0) {
+              timeoutSubscription?.cancel();
+              if (!mounted) return;
+              final data = InheritedLobby.of(context).data;
+              widget.connection
+                  .ready(Strategy(data.matches, data.startIndices.toList()));
+              setState(() {
+                ready = true;
+              });
+            }
+          },
+        );
+
+        return Scaffold(
+          appBar: AppBar(
+            scrolledUnderElevation: 0,
+            title: StreamBuilder(
+                stream: widget.connection.lobbyTimerController.stream,
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return Text(snapshot.data.toString());
+                  }
+                  return const Icon(Icons.timer_outlined);
+                }),
+            actions: [
+              Builder(builder: (context) {
+                return IconButton(
+                    onPressed: () {
+                      if (!ready) {
+                        timeoutSubscription?.cancel();
+
+                        final data = InheritedLobby.of(context).data;
+                        widget.connection.ready(
+                            Strategy(data.matches, data.startIndices.toList()));
+                        setState(() {
+                          ready = true;
+                        });
+                      }
+                    },
+                    icon: Tooltip(
+                      message: 'Готовность',
+                      child: Icon(
+                        Icons.check_circle_outline_rounded,
+                        color: ready ? Colors.green : null,
+                      ),
+                    ));
+              })
+            ],
+            centerTitle: true,
+          ),
+          body: const Column(
+            children: [
+              LobbyInfo(),
+              LobbyTools(),
+              CellPicker(),
+              MatchPicker(),
+              CellPalette()
+            ],
+          ),
+        );
+      }),
     );
   }
 }
@@ -163,29 +191,35 @@ class LobbyInfo extends StatelessWidget {
 
     return AnimatedSize(
         duration: const Duration(milliseconds: 300),
-        child: Column(
-            children: lobbyData.showFullData
-                ? [
-                    ListTile(
-                      title: const Text('Код игры:'),
-                      trailing: Text(gameData.gameCode),
-                    ),
-                    const ListTile(
-                      title: Text('Имя оппонента:'),
-                      trailing: SizedBox(
-                        width: 100,
-                        child: LinearProgressIndicator(),
+        child: SelectionArea(
+          child: Column(
+              children: lobbyData.showFullData
+                  ? [
+                      ListTile(
+                        title: const Text('Код игры:'),
+                        trailing: Text(gameData.gameCode),
                       ),
-                    ),
-                    ListTile(
-                        title: const Text('Количество итераций:'),
-                        trailing: Text(gameData.iterations.toString())),
-                    const ListTile(
-                      title: Text(
-                          'Размести до 10 стартовых синих клеток на игровом поле. Затем настрой правила для своих клеток.\nПодсказка: поле можно приближать!'),
-                    ),
-                  ]
-                : const []));
+                      FutureBuilder<String>(
+                        future: gameData.opponentName.future,
+                        builder: (context, snapshot) => ListTile(
+                            title: const Text('Имя оппонента:'),
+                            trailing: !snapshot.hasData
+                                ? const SizedBox(
+                                    width: 100,
+                                    child: LinearProgressIndicator(),
+                                  )
+                                : Text(snapshot.data!)),
+                      ),
+                      ListTile(
+                          title: const Text('Количество итераций:'),
+                          trailing: Text(gameData.iterations.toString())),
+                      const ListTile(
+                        title: Text(
+                            'Размести до 10 стартовых синих клеток на игровом поле. Затем настрой правила для своих клеток.\nПодсказка: поле можно приближать!'),
+                      ),
+                    ]
+                  : const []),
+        ));
   }
 }
 
