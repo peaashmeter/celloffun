@@ -19,10 +19,14 @@ class _SessionScreenState extends State<SessionScreen> {
 
   @override
   void initState() {
+    const endpoint = bool.hasEnvironment('ENDPOINT')
+        ? String.fromEnvironment('ENDPOINT')
+        : 'ws://localhost:8080';
+
     connection = Connection(
         sessionId: widget.sessionId,
         name: widget.name,
-        channel: WebSocketChannel.connect(Uri.parse('ws://localhost:8080')));
+        channel: WebSocketChannel.connect(Uri.parse(endpoint)));
     super.initState();
   }
 

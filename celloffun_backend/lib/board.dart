@@ -94,10 +94,10 @@ class Board {
       }).toList();
 
       if (neighbors.whereType<DeadCell>().length case 3 || 6 || 7 || 8) {
-        return DeadCell();
+        return const DeadCell();
       }
       if (neighbors.whereType<Void>().length case 3 || 6 || 7 || 8) {
-        return Void();
+        return const Void();
       }
       return cells[i];
     }).toList();
