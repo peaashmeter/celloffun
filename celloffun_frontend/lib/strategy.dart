@@ -16,6 +16,16 @@ class Match {
 
   Match({required this.pattern, required this.result});
 
+  Match.plain(String clientId)
+      : pattern = Pattern(
+            cells: List<Cell>.generate(
+          9,
+          (index) => index == 4
+              ? Cell(CellTypes.alive, owner: clientId)
+              : Cell(CellTypes.dead, owner: clientId),
+        )),
+        result = Cell(CellTypes.alive, owner: clientId);
+
   toJson() => {'pattern': pattern.toJson(), 'result': result.toJson()};
 }
 

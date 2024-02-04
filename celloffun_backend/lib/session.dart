@@ -14,7 +14,7 @@ class Session {
   Board? board;
   bool isSimulating = false;
 
-  int secondsRemain = 150;
+  int secondsRemain = 180;
 
   final StreamController<dynamic> sessionStreamController =
       StreamController.broadcast();
@@ -23,7 +23,7 @@ class Session {
   final Completer<void> _closed = Completer();
 
   Session(this.gameCode)
-      : board = Board.empty(),
+      : board = Board.daynight(),
         totalIterations = Random().nextInt(1) + 200;
 
   bool checkReadiness() => (connections.every((c) => c.state is Ready));

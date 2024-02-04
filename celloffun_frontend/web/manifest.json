@@ -1,11 +1,11 @@
 {
-    "name": "celloffun_frontend",
-    "short_name": "celloffun_frontend",
+    "name": "Целлофан – битва клеточных автоматов",
+    "short_name": "Целлофан",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Целлофан – битва клеточных автоматов",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

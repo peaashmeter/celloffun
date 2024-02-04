@@ -75,7 +75,7 @@ class Connection {
             .toList(),
         points: (strategy['points'] as List).cast<int>());
 
-    if (session.checkReadiness()) {
+    if (session.checkPlayersConnected() && session.checkReadiness()) {
       session.startSimulation();
     }
   }

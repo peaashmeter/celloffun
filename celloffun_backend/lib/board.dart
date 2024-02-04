@@ -1,4 +1,5 @@
 import 'dart:core' hide Match, Pattern;
+import 'dart:math';
 
 import 'package:celloffun_backend/cell.dart';
 import 'package:celloffun_backend/match.dart';
@@ -20,6 +21,20 @@ class Board {
         if (y == 0 || y == height - 1) return const Void();
         return const DeadCell();
       }));
+
+  factory Board.random() => Board(
+          cells: List.generate(width * height, (i) {
+        if (Random().nextInt(10) > 7) return const Void();
+        return const DeadCell();
+      }));
+
+  factory Board.daynight() {
+    var b = Board.random();
+    for (var i = 0; i < 10; i++) {
+      b = b._iterateDayNight();
+    }
+    return b;
+  }
 
   Board iterate(List<Match> matches) {
     final newCells = List.generate(width * height, (index) => index).map((i) {
@@ -56,5 +71,37 @@ class Board {
     }).toList();
 
     return Board(cells: newCells, iteration: iteration + 1);
+  }
+
+  Board _iterateDayNight() {
+    final newCells = List.generate(width * height, (index) => index).map((i) {
+      final (x, y) = (i % width, i ~/ height);
+
+      final neighbors = [
+        (x - 1, y - 1),
+        (x, y - 1),
+        (x + 1, y - 1),
+        (x - 1, y),
+        (x + 1, y),
+        (x - 1, y + 1),
+        (x, y + 1),
+        (x + 1, y + 1)
+      ].map((point) {
+        return switch (height * point.$2 + point.$1) {
+          final i_ && >= 0 => cells.elementAtOrNull(i_),
+          _ => null
+        };
+      }).toList();
+
+      if (neighbors.whereType<DeadCell>().length case 3 || 6 || 7 || 8) {
+        return DeadCell();
+      }
+      if (neighbors.whereType<Void>().length case 3 || 6 || 7 || 8) {
+        return Void();
+      }
+      return cells[i];
+    }).toList();
+
+    return Board(cells: newCells);
   }
 }

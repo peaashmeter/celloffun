@@ -2,8 +2,9 @@ import 'package:celloffun_frontend/cell.dart';
 import 'package:celloffun_frontend/connection.dart';
 import 'package:celloffun_frontend/game_data.dart';
 import 'package:celloffun_frontend/rendering.dart';
-import 'package:celloffun_frontend/widgets/lobby.dart';
 import 'package:flutter/material.dart';
+
+import '../inherited_lobby.dart';
 
 const maxInitialCells = 10;
 
@@ -79,7 +80,7 @@ class CellPickerState extends State<CellPicker> {
 
   @override
   Widget build(BuildContext context) {
-    final width = InheritedLobby.of(context).data.showFullData ? 500 : 300;
+    final width = InheritedLobby.of(context).data.showPatterns ? 300 : 500;
 
     const padding = 16;
     final sideLength =
@@ -120,7 +121,7 @@ class CellPickerState extends State<CellPicker> {
                       child: FutureBuilder(
                         future: makeGridImage(pixels),
                         builder: (context, snapshot) {
-                          if (!snapshot.hasData) return const Placeholder();
+                          if (!snapshot.hasData) return const SizedBox.shrink();
                           return CustomPaint(
                             painter: CustomGrid(snapshot.data!),
                             size: Size(sideLength, sideLength),
