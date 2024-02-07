@@ -3,6 +3,7 @@ import 'dart:core' hide Match;
 import 'package:celloffun_frontend/cell.dart';
 import 'package:celloffun_frontend/connection.dart';
 import 'package:celloffun_frontend/game_data.dart';
+import 'package:celloffun_frontend/main.dart';
 import 'package:celloffun_frontend/strategy.dart';
 import 'package:celloffun_frontend/widgets/cell_picker.dart';
 import 'package:celloffun_frontend/widgets/pattern_picker.dart';
@@ -34,7 +35,7 @@ class _LobbyState extends State<Lobby> {
   void didChangeDependencies() {
     clientId = InheritedGameData.of(context).data.clientId;
     selectedCell = Cell(CellTypes.alive, owner: clientId);
-    matches = List.generate(5, (index) => Match.plain(clientId));
+    matches = List.generate(1, (index) => Match.plain(clientId));
 
     super.didChangeDependencies();
   }
@@ -71,7 +72,15 @@ class _LobbyState extends State<Lobby> {
 
         return Scaffold(
           appBar: AppBar(
-            automaticallyImplyLeading: false,
+            leading: IconButton(
+                onPressed: () => Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => App(
+                        name: widget.connection.name,
+                      ),
+                    )),
+                icon: const Icon(Icons.arrow_back_rounded)),
             scrolledUnderElevation: 0,
             title: StreamBuilder(
                 stream: widget.connection.lobbyTimerController.stream,

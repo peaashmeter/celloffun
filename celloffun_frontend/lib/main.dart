@@ -9,7 +9,8 @@ void main() {
 }
 
 class App extends StatelessWidget {
-  const App({super.key});
+  final String? name;
+  const App({super.key, this.name});
 
   @override
   Widget build(BuildContext context) {
@@ -22,18 +23,44 @@ class App extends StatelessWidget {
             colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.blue,
         )),
-        home: Scaffold(
-          body: size.width < maxWidth
-              ? const MainScreen()
-              : Center(
-                  child: SizedBox(
-                    width: maxWidth,
-                    child: Navigator(
-                      onGenerateRoute: (route) => MaterialPageRoute(
-                          builder: (context) => const MainScreen()),
+        home: InheritedName(
+          name,
+          child: Scaffold(
+            body: size.width < maxWidth
+                ? const MainScreen()
+                : const Center(
+                    child: SizedBox(
+                      width: maxWidth,
+                      child: WideScreenNavigator(),
                     ),
                   ),
-                ),
+          ),
         ));
   }
+}
+
+class WideScreenNavigator extends StatelessWidget {
+  const WideScreenNavigator({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Navigator(
+      onGenerateRoute: (route) =>
+          MaterialPageRoute(builder: (context) => const MainScreen()),
+    );
+  }
+}
+
+class InheritedName extends InheritedWidget {
+  final String? name;
+
+  const InheritedName(this.name, {super.key, required super.child});
+
+  @override
+  bool updateShouldNotify(InheritedName oldWidget) => name != oldWidget.name;
+
+  static InheritedName of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<InheritedName>()!;
 }

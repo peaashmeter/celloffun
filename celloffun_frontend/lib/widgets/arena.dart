@@ -39,7 +39,9 @@ class Arena extends StatelessWidget {
                   onPressed: () => Navigator.pushReplacement(
                       _,
                       MaterialPageRoute(
-                        builder: (context) => const App(),
+                        builder: (context) => App(
+                          name: connection.name,
+                        ),
                       )),
                   child: const Text('Ок'))
             ],

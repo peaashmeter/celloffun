@@ -1,3 +1,4 @@
+import 'package:celloffun_frontend/main.dart';
 import 'package:celloffun_frontend/session.dart';
 import 'package:celloffun_frontend/widgets/help.dart';
 import 'package:flutter/material.dart';
@@ -42,7 +43,8 @@ class _MainScreenState extends State<MainScreen> {
           child: SizedBox(
               width: 300,
               child: TextField(
-                  controller: nameController,
+                  controller: nameController
+                    ..text = InheritedName.of(context).name ?? '',
                   maxLength: 20,
                   decoration: const InputDecoration(
                       labelText: 'Имя', hintText: 'Например, Олег'))),

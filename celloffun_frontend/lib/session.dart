@@ -16,6 +16,7 @@ class SessionScreen extends StatefulWidget {
 
 class _SessionScreenState extends State<SessionScreen> {
   late final Connection connection;
+  late final Lobby lobby;
 
   @override
   void initState() {

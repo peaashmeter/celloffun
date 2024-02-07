@@ -7,7 +7,7 @@ class LobbyData extends ChangeNotifier {
   late List<Match> matches;
   Set<int> startIndices = {};
 
-  bool ready = false;
+  bool ready;
   bool showPatterns = false;
 
   LobbyData({

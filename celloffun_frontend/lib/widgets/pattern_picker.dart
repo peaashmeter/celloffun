@@ -15,26 +15,24 @@ class PatternPicker extends StatelessWidget {
       return const SizedBox.shrink();
     }
     return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: GridView.builder(
-          shrinkWrap: true,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              childAspectRatio: 1.5, crossAxisCount: 2),
-          itemBuilder: (context, index) =>
-              switch (index == InheritedLobby.of(context).data.matches.length) {
-            true => const _AddMatchButton(),
-            _ => MatchCard(
-                key: ValueKey(index),
-                userId: InheritedGameData.of(context).data.clientId,
-                index: index,
-                lobbyData: InheritedLobby.of(context).data,
-              ),
-          },
-          itemCount: InheritedLobby.of(context).data.matches.length + 1,
-        ),
-      ),
-    );
+        child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: SingleChildScrollView(
+              child: Wrap(
+                  children: List.generate(
+                InheritedLobby.of(context).data.matches.length + 1,
+                (index) => switch (
+                    index == InheritedLobby.of(context).data.matches.length) {
+                  true => const _AddMatchButton(),
+                  _ => MatchCard(
+                      key: ValueKey(index),
+                      userId: InheritedGameData.of(context).data.clientId,
+                      index: index,
+                      lobbyData: InheritedLobby.of(context).data,
+                    ),
+                },
+              )),
+            )));
   }
 }
 
@@ -67,8 +65,8 @@ class _AddMatchButtonState extends State<_AddMatchButton> {
       child: Padding(
         padding: const EdgeInsets.all(4.0),
         child: Material(
+          elevation: 2,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
             side: BorderSide(
                 width: 2, color: Theme.of(context).colorScheme.secondary),
           ),
@@ -78,8 +76,11 @@ class _AddMatchButtonState extends State<_AddMatchButton> {
                   .data
                   .addMatch(InheritedGameData.of(context).data.clientId);
             },
-            child: const Center(
-              child: Icon(Icons.add_rounded),
+            child: const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Center(
+                child: Icon(Icons.add_rounded),
+              ),
             ),
           ),
         ),
@@ -124,48 +125,64 @@ class _MatchCardState extends State<MatchCard> {
       child: Padding(
         padding: const EdgeInsets.all(4.0),
         child: Material(
+          elevation: 2,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
             side: BorderSide(
                 width: 2, color: Theme.of(context).colorScheme.secondary),
           ),
-          child: Row(children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Container(
-                decoration: BoxDecoration(
-                    border: Border.all(
-                        color: Theme.of(context).colorScheme.secondary)),
-                width: 100,
-                height: 100,
-                child: GridView.count(
-                  crossAxisCount: 3,
-                  children: List.generate(
-                      9,
-                      (cellIdx) => PatternCell(
-                            key: ValueKey(widget.index * 10 + cellIdx),
-                            patternIdx: widget.index,
-                            cellIdx: cellIdx,
-                            userId: widget.userId,
-                            lobbyData: widget.lobbyData,
-                          )),
-                ),
+          child: Center(
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text('${widget.index + 1}'),
               ),
-            ),
-            const Icon(
-              Icons.arrow_right_alt_rounded,
-              size: 48,
-            ),
-            Container(
-                decoration: BoxDecoration(
-                    border: Border.all(
-                        color: Theme.of(context).colorScheme.secondary)),
-                child: PatternResultCell(
-                  userId: widget.userId,
-                  patternIdx: widget.index,
-                  lobbyData: widget.lobbyData,
-                ))
-          ]),
+              Row(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Container(
+                      decoration: BoxDecoration(border: Border.all()),
+                      width: 100,
+                      height: 100,
+                      child: GridView.count(
+                        shrinkWrap: true,
+                        crossAxisCount: 3,
+                        children: List.generate(
+                            9,
+                            (cellIdx) => PatternCell(
+                                  key: ValueKey(widget.index * 10 + cellIdx),
+                                  patternIdx: widget.index,
+                                  cellIdx: cellIdx,
+                                  userId: widget.userId,
+                                  lobbyData: widget.lobbyData,
+                                )),
+                      ),
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Icon(
+                      Icons.arrow_right_alt_rounded,
+                      size: 48,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Container(
+                        decoration: BoxDecoration(
+                            border: Border.all(
+                                color:
+                                    Theme.of(context).colorScheme.secondary)),
+                        child: PatternResultCell(
+                          userId: widget.userId,
+                          patternIdx: widget.index,
+                          lobbyData: widget.lobbyData,
+                        )),
+                  ),
+                ],
+              )
+            ]),
+          ),
         ),
       ),
     );
