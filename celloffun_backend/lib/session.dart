@@ -13,6 +13,7 @@ class Session {
   final String gameCode;
   Board? board;
   bool isSimulating = false;
+  bool closed = false;
 
   int secondsRemain = 180;
 
@@ -23,8 +24,8 @@ class Session {
   final Completer<void> _closed = Completer();
 
   Session(this.gameCode)
-      : board = Board.daynight(),
-        totalIterations = Random().nextInt(1) + 200;
+      : board = Board.random(),
+        totalIterations = Random().nextInt(200) + 200;
 
   bool checkReadiness() => (connections.every((c) => c.state is Ready));
   bool checkPlayersConnected() => connections.length == 2;
@@ -90,7 +91,7 @@ class Session {
     while (true) {
       if (b.iteration == totalIterations) {
         yield _handleOutcome(b);
-        await _close();
+        await close();
         return;
       }
 
@@ -118,8 +119,10 @@ class Session {
     return (jsonEncode(report));
   }
 
-  _close() {
+  close() {
+    if (closed) return;
     _closed.complete();
+    closed = true;
   }
 
   sendOpponentNames() {

@@ -20,8 +20,9 @@ class DeadCell extends Cell {
 
 class AliveCell extends Cell {
   final String owner;
+  final int age;
 
-  const AliveCell({required this.owner});
+  const AliveCell({required this.owner, this.age = 0});
 
   @override
   Map toJson() => {'type': 'alive', 'owner': owner};
@@ -32,6 +33,14 @@ class AliveCell extends Cell {
   @override
   bool operator ==(Object other) {
     return other is AliveCell && other.owner == owner;
+  }
+
+  Cell olden() {
+    if (age == 0) {
+      return AliveCell(owner: owner, age: age + 1);
+    } else {
+      return const DeadCell();
+    }
   }
 }
 

@@ -87,6 +87,11 @@ class Connection {
     }
     final session = Session(id)
       ..waitForClose().then((value) => sessions.remove(id));
+
+    Future.delayed(Duration(minutes: 15), () {
+      if (session.closed) return;
+      session.close();
+    }); //Kill inactive sessions
     sessions[id] = session;
     return sessions[id]!;
   }

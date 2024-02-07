@@ -22,19 +22,33 @@ class Board {
         return const DeadCell();
       }));
 
-  factory Board.random() => Board(
+  factory Board.noise() => Board(
           cells: List.generate(width * height, (i) {
         if (Random().nextInt(10) > 7) return const Void();
         return const DeadCell();
       }));
 
   factory Board.daynight() {
-    var b = Board.random();
+    var b = Board.noise();
     for (var i = 0; i < 10; i++) {
       b = b._iterateDayNight();
     }
     return b;
   }
+
+  factory Board.divided() => Board(
+          cells: List.generate(width * height, (i) {
+        final (_, y) = (i % width, i ~/ height);
+        if (y == height ~/ 3 || y == height - height ~/ 3 - 1) {
+          return const Void();
+        }
+        return const DeadCell();
+      }));
+
+  factory Board.random() => switch (Random().nextBool()) {
+        true => Board.empty(),
+        false => Board.divided()
+      };
 
   Board iterate(List<Match> matches) {
     final newCells = List.generate(width * height, (index) => index).map((i) {
@@ -67,6 +81,7 @@ class Board {
         }
       }
       if (results.length == 1) return results.single;
+      if (initial is AliveCell) return initial.olden();
       return initial;
     }).toList();
 
